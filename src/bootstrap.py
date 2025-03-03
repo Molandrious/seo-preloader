@@ -7,7 +7,7 @@ from fastapi import FastAPI
 
 from src.services.tasks import generate_sitemap_pages, run_task
 from src.settings import get_settings
-from src.transport import rest
+from src.transport.pages_view import router
 
 
 @asynccontextmanager
@@ -15,24 +15,23 @@ async def _lifespan(
     app: FastAPI,  # noqa
 ) -> AsyncGenerator[None]:
 
-    scheduler = Scheduler(limit=1, wait_timeout=5, pending_limit=1)
-    await scheduler.spawn(run_task(task=generate_sitemap_pages, delay_seconds=10))
+    # scheduler = Scheduler(limit=1, wait_timeout=5, pending_limit=1)
+    # await scheduler.spawn(run_task(task=generate_sitemap_pages, delay_seconds=10))
 
     yield
 
 
-    await scheduler.close()
+   # await scheduler.close()
 
 
 @lru_cache
 def make_app() -> FastAPI:
-    settings = get_settings()
 
     app = FastAPI(
         lifespan=_lifespan,
         redoc_url=None,
     )
 
-    rest.init_api_routes(app=app)
+    app.include_router(router)
 
     return app
