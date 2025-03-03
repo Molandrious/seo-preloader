@@ -20,7 +20,7 @@ class PagesService:
 
     async def generate_pages(self, sitemap_url: str):
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient() as client:
                 response = await client.get(sitemap_url)
                 xml_data = response.text
         except httpx.ConnectTimeout:
@@ -35,25 +35,26 @@ class PagesService:
             raise HTTPException(status_code=404, detail=msg)
 
         async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=False)
+            context = await browser.new_context()
             for url in urls:
                 try:
-                    browser = await p.chromium.launch(headless=False)
-                    page = await browser.new_page()
-                    await page.goto(url, timeout=120000, wait_until="load")
-
+                    page = await context.new_page()
+                    await page.goto(url, wait_until="networkidle")
                     content = await page.content()
                     file_path = self._generate_output_path(url)
                     os.makedirs(os.path.dirname(file_path), exist_ok=True)
                     with open(file_path, "w", encoding="utf-8") as f:
                         f.write(content)
                     print(f"Сохранено: {file_path}")
-                    await browser.close()
                 except Exception as e:
                     msg = f"Ошибка при обработке {url}: {e}"
                     print(msg)
                     raise HTTPException(status_code=500, detail=msg)
+                finally:
+                    await page.close()
 
-
+            await browser.close()
 
     def parse_urls(self, xml_string: str) -> List[str]:
         ns = {'ns': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
