@@ -13,9 +13,3 @@ router = APIRouter(
 async def get_page_html(url: str):
     service = PagesService()
     return await service.get_page_html(url=url)
-
-
-@router.get('/generate')
-async def get_generate_html(url: str):
-    service = PagesService()
-    await service.generate_pages(sitemap_url=url)

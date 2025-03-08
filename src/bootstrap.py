@@ -15,13 +15,12 @@ async def _lifespan(
     app: FastAPI,  # noqa
 ) -> AsyncGenerator[None]:
 
-    # scheduler = Scheduler(limit=1, wait_timeout=5, pending_limit=1)
-    # await scheduler.spawn(run_task(task=generate_sitemap_pages, delay_seconds=10))
-
+    scheduler = Scheduler(limit=1, wait_timeout=5, pending_limit=1)
+    await scheduler.spawn(run_task(task=generate_sitemap_pages, delay_seconds=get_settings().env.generation_delay_seconds))
+    get_settings().metadata_path.open('a+')
     yield
 
-
-   # await scheduler.close()
+    await scheduler.close()
 
 
 @lru_cache
