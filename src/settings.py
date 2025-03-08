@@ -1,7 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import BaseModel, DirectoryPath, Field
+from pydantic import BaseModel, DirectoryPath, Field, FilePath
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,12 +20,15 @@ class RESTSettings(_BaseSettings):
 
 class EnvSettings(_BaseSettings):
     rest: RESTSettings = RESTSettings(_env_prefix='REST_') # noqa
-    cron_timer: str = Field(default='0 0 * * *')
+    generation_delay_seconds: int = Field(default=24*3600)
     sitemap_list: list[str] = Field()
+    not_found_tag: str
 
 class Settings(BaseModel):
     env: EnvSettings = EnvSettings()
     root_path: DirectoryPath = Path(__file__).parent.parent.resolve()
+    static_path: DirectoryPath = root_path.joinpath("src", "static")
+    metadata_path: FilePath = static_path.joinpath("pages_metadata.json")
 
 
 @lru_cache
