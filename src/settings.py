@@ -15,14 +15,14 @@ class _BaseSettings(BaseSettings):
     )
 
 class RESTSettings(_BaseSettings):
-    host: str = Field(default='127.0.0.1')
-    port: int = Field(default=8000)
+    host: str = Field(default='0.0.0.0')
+    port: int = Field(default=3000)
 
 class EnvSettings(_BaseSettings):
     rest: RESTSettings = RESTSettings(_env_prefix='REST_') # noqa
     generation_delay_seconds: int = Field(default=24*3600)
     sitemap_list: list[str] = Field()
-    not_found_tag: str
+    not_found_tag: str = Field(default='<meta name="ssr" content="404" data-react-helmet="true">')
 
 class Settings(BaseModel):
     env: EnvSettings = EnvSettings()

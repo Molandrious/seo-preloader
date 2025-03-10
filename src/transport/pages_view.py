@@ -4,12 +4,12 @@ from starlette.responses import HTMLResponse
 from src.services.pages import PagesService
 
 router = APIRouter(
-    prefix='/pages',
-    tags=['Pages']
+    prefix='/render',
+    tags=['Render']
 )
 
 
-@router.get('/', response_class=HTMLResponse)
+@router.get('/{url:path}', response_class=HTMLResponse)
 async def get_page_html(url: str):
-    service = PagesService()
-    return await service.get_page_html(url=url)
+    render_data =  await PagesService.get_page_html(url=url)
+    return HTMLResponse(content=render_data.content, status_code=render_data.status_code)

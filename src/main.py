@@ -1,12 +1,11 @@
-
-from src.settings import Settings  # noqa
 import uvicorn
 
 from src.bootstrap import make_app  # noqa
+from src.settings import get_settings
 
 
 def main() -> None:
-    settings = Settings()
+    settings = get_settings()
     uvicorn.run(
         app=make_app,
         host=settings.env.rest.host,

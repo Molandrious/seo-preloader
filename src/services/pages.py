@@ -1,37 +1,45 @@
 import contextlib
-import httpx
-import json
 import datetime
+import json
 
+import httpx
 import xmltodict
 from fastapi import HTTPException
 from playwright.async_api import async_playwright
+from pydantic import BaseModel
 
 from src.services.models import Sitemap
-from src.services.utils import parse_page, generate_output_path, read_metadata
+from src.services.utils import generate_output_path, parse_page, read_metadata
 from src.settings import get_settings
 
 
+class PageRenderDTO(BaseModel):
+    content: str
+    status_code: int
+
+
 class PagesService:
-    async def get_page_html(self, url: str) -> str:
+    @staticmethod
+    async def get_page_html(url: str) -> PageRenderDTO:
         metadata = read_metadata()
 
         if html_metadata := metadata.get(url):
             with open(html_metadata['path'], "r", encoding="utf-8") as f:
                 html: str = f.read()
-            return html
+            return PageRenderDTO(content=html, status_code=200)
 
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=False)
+            browser = await p.chromium.launch(headless=True)
             context = await browser.new_context()
             content = await parse_page(context, url)
 
             if get_settings().env.not_found_tag in content:
-                raise HTTPException(status_code=404)
+                return PageRenderDTO(content=content, status_code=404)
 
-            return content
+            return PageRenderDTO(content=content, status_code=200)
 
-    async def generate_pages(self, sitemap_url: str):
+    @staticmethod
+    async def generate_pages(sitemap_url: str):
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.get(sitemap_url)
